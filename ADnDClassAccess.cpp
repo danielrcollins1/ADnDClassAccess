@@ -3,35 +3,41 @@
 	Copyright: 2022
 	Author: Daniel R. Collins
 	Date: 22/08/22 23:40
-	Description: Find odds to generate any class
-		from 1E defined stat-generation methods.
+	Description: 
+		Find odds to generate any class
+		from 1E AD&D defined stat-generation methods.
 
 		Assumes that ability limits for core classes 
 		DO carry to subclasses (unless otherwise noted).
+
+		Method Roman numeral identifiers written 
+		as Arabic to synch with C++, array indexing, etc.
 */
 #include <ctime>
+#include <cassert>
 #include <iomanip>
 #include <iostream>
 using namespace std;
 
 // Constants
-const int NUM_STATS = 6;
 const int DIE_SIDES = 6;
+const int NUM_STATS = 6;
 const int NAME_LEN = 16;
+const int NUM_METHODS = 5;
 const int NUM_TRIALS = 10000;
 
-// Typedef for stat array
-typedef int StatArray[NUM_STATS];
+// Typedef for a stat block
+typedef int StatBlock[NUM_STATS];
 
 // Structure for class record
 struct ClassRecord {
 	char name[NAME_LEN];
-	StatArray statArray;
+	StatBlock statBlock;
 };
 
 // Class records for minimum abilities
 // Order: Str, Int, Wis, Dex, Con, Cha.
-ClassRecord classReqs[] = {
+const ClassRecord CLASS_REQS[] = {
 	{"Cleric",      { 6,  6,  9,  3,  6,  6}},	
 	{"Druid",       { 6,  6, 12,  3,  6, 15}},	
 	{"Fighter",     { 9,  3,  6,  6,  7,  6}},	
@@ -43,12 +49,10 @@ ClassRecord classReqs[] = {
 	{"Assassin",    {12, 11,  3, 12,  6,  3}},	
 	{"Monk",        {15,  6, 15, 15, 11,  6}},	
 };
-
-// Constant for number of class records
-const int NUM_CLASSES = sizeof(classReqs) / sizeof(ClassRecord);
+const int NUM_CLASSES = sizeof(CLASS_REQS) / sizeof(ClassRecord);
 
 // Class records with abilities sorted descending
-ClassRecord classReqsSorted[NUM_CLASSES];
+ClassRecord CLASS_REQS_SORTED[NUM_CLASSES];
 
 // Bubble sort descending edited from Gaddis C++
 void sortArray(int array[], int size) {
@@ -69,12 +73,33 @@ void sortArray(int array[], int size) {
    while (swap);
 }
 
-// Initialize the sort class records
+// Initialize the sorted class records
 void initClassReqsSorted() {
 	for (int i = 0; i < NUM_CLASSES; i++) {
-		classReqsSorted[i] = classReqs[i];
-		sortArray(classReqsSorted[i].statArray, NUM_STATS);
+		CLASS_REQS_SORTED[i] = CLASS_REQS[i];
+		sortArray(CLASS_REQS_SORTED[i].statBlock, NUM_STATS);
 	}
+}
+
+// Print one of the class record lists for testing.
+void printClassReqs(const ClassRecord classReqs[]) {
+	for (int i = 0; i < NUM_CLASSES; i++) {
+		cout << left << setw(NAME_LEN) << classReqs[i].name;
+		for (int j = 0; j < NUM_STATS; j++) {
+			cout << right << setw(3) << classReqs[i].statBlock[j];
+		}
+		cout << endl;
+	}
+	cout << endl;
+}
+
+// Print the two class record lists for testing.
+void printAllClassReqs() {
+	cout << "# Normal Class Requisites #" << endl;
+	printClassReqs(CLASS_REQS);
+	cout << "# Sorted Class Requisites #" << endl;
+	printClassReqs(CLASS_REQS_SORTED);
+	cout << endl;
 }
 
 // Roll 1d6
@@ -82,7 +107,7 @@ int rollDie() {
 	return rand() % DIE_SIDES + 1;
 }
 
-// Roll 3d6 (Method 0)
+// Roll 3d6 (per Method 0, et. al.)
 int roll3d6() {
 	int sum = 0;
 	for (int i = 0; i < 3; i++) {
@@ -91,7 +116,7 @@ int roll3d6() {
 	return sum;
 }
 
-// Roll 4d6 drop lowest (Method I)
+// Roll 4d6 drop lowest (per Method 1)
 int roll4d6Drop1() {
 	int sum = 0;
 	int lowest = 999;
@@ -106,7 +131,7 @@ int roll4d6Drop1() {
 	return sum;
 }
 
-// Roll 3d6 times 6, take best (Method III)
+// Roll 3d6 times 6, take best (per Method 3)
 int roll3d6BestOf6() {
 	int highest = 0;
 	for (int i = 0; i < 6; i++) {
@@ -118,175 +143,111 @@ int roll3d6BestOf6() {
 	return highest;
 }
 
-// Do we qualify for this class with these stats?
-bool classAllowed (ClassRecord classRec, StatArray stats) {
+// Make stat block per Method 0
+void makeStatsMethod0 (StatBlock &stats) {
 	for (int i = 0; i < NUM_STATS; i++) {
-		if (stats[i] < classRec.statArray[i])
-			return false;
+		stats[i] = roll3d6();
 	}
-	return true;
 }
 
-// Print class records sorted version for testing.
-void printClassReqs() {
-	cout << "# Class Requirements #" << endl;
-	for (int i = 0; i < NUM_CLASSES; i++) {
-		cout << left << setw(NAME_LEN) << classReqs[i].name;
-		for (int j = 0; j < NUM_STATS; j++) {
-			cout << right << setw(3) << classReqs[i].statArray[j];
-		}
-		cout << endl;
-	}
-	cout << endl;
-}
-
-// Print sorted class records sorted version for testing.
-void printClassReqsSorted() {
-	cout << "# Class Requirements Sorted #" << endl;
-	for (int i = 0; i < NUM_CLASSES; i++) {
-		cout << left << setw(NAME_LEN) << classReqsSorted[i].name;
-		for (int j = 0; j < NUM_STATS; j++) {
-			cout << right << setw(3) << classReqsSorted[i].statArray[j];
-		}
-		cout << endl;
-	}
-	cout << endl;
-}
-
-// Print results for a generation method
-void printResults(int passCount[NUM_CLASSES]) {
-	for (int i = 0; i < NUM_CLASSES; i++) {
-		double percent = (double) passCount[i] / NUM_TRIALS * 100;
-		cout << left << setw(16) << classReqs[i].name;
-		cout << right << setw(6) << percent << " %" << endl;		
-	}
-	cout << endl;
-}
-
-// Make stat record per Method I (to be reordered)
-void makeStatsMethodI (StatArray &stats) {
+// Make stat block per Method 1
+void makeStatsMethod1 (StatBlock &stats) {
 	for (int i = 0; i < NUM_STATS; i++) {
 		stats[i] = roll4d6Drop1();
 	}
 }
 
-// Count passing for Method I (note reordering)
-void countPassingMethodI (int passCount[NUM_CLASSES]) {
-	for (int i = 0; i < NUM_CLASSES; i++) {
-		passCount[i] = 0;	
-	}
-	for (int t = 0; t < NUM_TRIALS; t++) {
-		StatArray stats;
-		makeStatsMethodI(stats);
-		sortArray(stats, NUM_STATS);
-		for (int i = 0; i < NUM_CLASSES; i++) {
-			if (classAllowed(classReqsSorted[i], stats)) {
-				passCount[i]++;	
-			}
-		}
-	}
-}
+// Make stat block per Method 2
+void makeStatsMethod2 (StatBlock &stats) {
 
-// Test Method I
-void testMethodI() {
-	cout << "# Method I #" << endl;
-	int passCount[NUM_CLASSES]; 	
-	countPassingMethodI(passCount);
-	printResults(passCount);	
-	cout << endl;
-}
-
-// Make stat record per Method II (to be reordered)
-void makeStatsMethodII (StatArray &stats) {
+	// Roll 12 stats
 	const int NUM_ROLLS = 12;
 	int dozenStats[NUM_ROLLS];
 	for (int i = 0; i < NUM_ROLLS; i++) {
 		dozenStats[i] = roll3d6();
 	}
+	
+	// Take the best 6
 	sortArray(dozenStats, NUM_ROLLS);
 	for (int i = 0; i < NUM_STATS; i++) {
 		stats[i] = dozenStats[i];	
 	}
 }
 
-// Count passing for Method II (note reordering)
-void countPassingMethodII (int passCount[NUM_CLASSES]) {
-	for (int i = 0; i < NUM_CLASSES; i++) {
-		passCount[i] = 0;	
-	}
-	for (int t = 0; t < NUM_TRIALS; t++) {
-		StatArray stats;
-		makeStatsMethodII(stats);
-		for (int i = 0; i < NUM_CLASSES; i++) {
-			if (classAllowed(classReqsSorted[i], stats)) {
-				passCount[i]++;	
-			}
-		}
-	}
-}
-
-// Test Method II
-void testMethodII() {
-	cout << "# Method II #" << endl;
-	int passCount[NUM_CLASSES]; 	
-	countPassingMethodII(passCount);
-	printResults(passCount);	
-	cout << endl;
-}
-
-// Make stat record per Method III
-void makeStatsMethodIII (StatArray &stats) {
+// Make stat block per Method 3
+void makeStatsMethod3 (StatBlock &stats) {
 	for (int i = 0; i < NUM_STATS; i++) {
 		stats[i] = roll3d6BestOf6();
 	}
 }
 
-// Count passing for Method III (unsorted)
-void countPassingMethodIII (int passCount[NUM_CLASSES]) {
-	for (int i = 0; i < NUM_CLASSES; i++) {
-		passCount[i] = 0;	
-	}
-	for (int t = 0; t < NUM_TRIALS; t++) {
-		StatArray stats;
-		makeStatsMethodIII(stats);
-		for (int i = 0; i < NUM_CLASSES; i++) {
-			if (classAllowed(classReqs[i], stats)) {
-				passCount[i]++;	
-			}
-		}
-	}
-}
-
-// Test Method III
-void testMethodIII() {
-	cout << "# Method III #" << endl;
-	int passCount[NUM_CLASSES]; 	
-	countPassingMethodIII(passCount);
-	printResults(passCount);	
-	cout << endl;
-}
-
-// Make on stat record per Method IV
-void makeStatsMethodIV (StatArray &stats) {
+// Make one stat block per Method 4
+void makeStatsMethod4 (StatBlock &stats) {
 	for (int i = 0; i < NUM_STATS; i++) {
 		stats[i] = roll3d6();
 	}
 }
 
-// Count passing for Method IV
-void countPassingMethodIV (int passCount[NUM_CLASSES]) {
-	for (int i = 0; i < NUM_CLASSES; i++) {
-		passCount[i] = 0;	
+// List of stack-block maker functions
+typedef void (*StatMakerFunc)(StatBlock&);
+StatMakerFunc STAT_MAKER[NUM_METHODS] = {
+	&makeStatsMethod0, &makeStatsMethod1, &makeStatsMethod2,
+	&makeStatsMethod3, &makeStatsMethod4
+};
+
+// Does this method allow re-ordering the scores?
+bool methodAllowsReorder (int index) {
+	switch (index) {
+		case 1: case 2: return true;
+		default: return false;
 	}
+}
+
+// Typedef for passing success tallies
+typedef int PassCount[NUM_CLASSES];
+
+// Do we qualify for this class with these stats?
+bool classAllowed (ClassRecord classRec, StatBlock stats) {
+	for (int i = 0; i < NUM_STATS; i++) {
+		if (stats[i] < classRec.statBlock[i])
+			return false;
+	}
+	return true;
+}
+
+// Get pass rates for generic generation method
+void testMethodX (int index, PassCount passCount) {
+	assert(index != 4);
+	bool reorder = methodAllowsReorder(index);
+	const ClassRecord *classReqs = reorder ?
+		CLASS_REQS_SORTED : CLASS_REQS;
+	for (int t = 0; t < NUM_TRIALS; t++) {
+		StatBlock stats;
+		STAT_MAKER[index](stats);
+		if (reorder) {
+			sortArray(stats, NUM_STATS);
+		}
+		for (int i = 0; i < NUM_CLASSES; i++) {
+			if (classAllowed(classReqs[i], stats)) {
+				passCount[i]++;
+			}
+		}
+	}
+}
+
+// Get pass rates for Method 4
+// This method needs special handling
+//  because it deals with multiple full stat blocks.
+void testMethod4 (PassCount passCount) {
 	for (int t = 0; t < NUM_TRIALS; t++) {
 		const int NUM_CHARS = 12;
-		StatArray stats[NUM_CHARS];
+		StatBlock stats[NUM_CHARS];
 		for (int c = 0; c < NUM_CHARS; c++) {
-			makeStatsMethodIV(stats[c]);
+			makeStatsMethod4(stats[c]);
 		}
 		for (int i = 0; i < NUM_CLASSES; i++) {
 			for (int c = 0; c < NUM_CHARS; c++) {
-				if (classAllowed(classReqs[i], stats[c])) {
+				if (classAllowed(CLASS_REQS[i], stats[c])) {
 					passCount[i]++;	
 					break;
 				}
@@ -295,34 +256,44 @@ void countPassingMethodIV (int passCount[NUM_CLASSES]) {
 	}
 }
 
-// Test Method IV
-void testMethodIV() {
-	cout << "# Method IV #" << endl;
-	int passCount[NUM_CLASSES]; 	
-	countPassingMethodIV(passCount);
-	printResults(passCount);	
+// Print test results for a generation method
+void printTestResults(PassCount passCount) {
+	for (int i = 0; i < NUM_CLASSES; i++) {
+		double percent = (double) passCount[i] / NUM_TRIALS * 100;
+		cout << left << setw(16) << CLASS_REQS[i].name;
+		cout << right << setw(6) << percent << " %" << endl;		
+	}
+}
+
+// Test a given stat-generation method.
+void testMethod(int index) {
+	cout << "# Method " << index << " #" << endl;
+	PassCount passCount = {0};
+	switch (index) {
+		default: testMethodX(index, passCount); break;
+		case 4: testMethod4(passCount); break;
+	}
+	printTestResults(passCount);
 	cout << endl;
+}
+
+// Test each of the generation methods.
+void testAllMethods() {
+	for (int i = 0; i < NUM_METHODS; i++) {
+		testMethod(i);	
+	}
 }
 
 // Main test driver
 int main(int argc, char** argv) {
 	srand(time(0));
 	initClassReqsSorted();
-	testMethodI();
-	testMethodII();
-	testMethodIII();
-	testMethodIV();
+	testAllMethods();
 	return 0;
 }
 
 /*
 	TODO:
 	- Fix output decimal places
-	- Spot hand-check some numbers
-	- Upload to Github
-	- Refactor common stuff (in testMethodX, 
-	  hand off pointer to hanlding methods?)
-	- Add Method V
-	- Add some OD&D, UA style classes
-	- Add Bards?
+	- Add OD&D, Bards, UA style classes?
 */
