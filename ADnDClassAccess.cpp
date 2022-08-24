@@ -248,7 +248,8 @@ bool methodAllowsReorder (int index) {
 }
 
 // Typedef for passing success tallies
-typedef int PassCount[NUM_CLASSES];
+//   Extra entry is to count hopeless characters
+typedef int PassCount[NUM_CLASSES + 1];
 
 // Do we qualify for this class with these stats?
 bool classAllowed (ClassRecord classRec, StatBlock stats) {
@@ -271,10 +272,15 @@ void testMethodX (int index, PassCount passCount) {
 		if (reorder) {
 			sortArray(stats, NUM_STATS);
 		}
+		bool anyPassed = false;
 		for (int i = 0; i < NUM_CLASSES; i++) {
 			if (classAllowed(classReqs[i], stats)) {
 				passCount[i]++;
+				anyPassed = true;
 			}
+		}
+		if (!anyPassed) {
+			passCount[NUM_CLASSES]++;			
 		}
 	}
 }
@@ -289,13 +295,18 @@ void testMethod4 (PassCount passCount) {
 		for (int c = 0; c < NUM_CHARS; c++) {
 			makeStatsMethod4(stats[c]);
 		}
+		bool anyPassed = false;
 		for (int i = 0; i < NUM_CLASSES; i++) {
 			for (int c = 0; c < NUM_CHARS; c++) {
 				if (classAllowed(CLASS_REQS[i], stats[c])) {
 					passCount[i]++;	
+					anyPassed = true;
 					break;
 				}
 			}
+		}
+		if (!anyPassed) {
+			passCount[NUM_CLASSES]++;			
 		}
 	}
 }
@@ -313,14 +324,20 @@ double getPassPercent(int passCount) {
 	return (double) passCount / NUM_TRIALS * 100;	
 }
 
+// Print one line of testing results
+void printTestLine (const char* name, int passCount) {
+	cout << left << setw(NAME_LEN) << name
+		<< right << setw(6) << getPassPercent(passCount) 
+		<< " %" << endl;
+}
+
 // Print test results for a generation method
 void printTestResults(PassCount passCount) {
 	cout << fixed << showpoint << setprecision(2);
 	for (int i = 0; i < NUM_CLASSES; i++) {
-		cout << left << setw(NAME_LEN) << CLASS_REQS[i].name;
-		cout << right << setw(6) 
-			<< getPassPercent(passCount[i]) << " %" << endl;
+		printTestLine(CLASS_REQS[i].name, passCount[i]);
 	}
+	printTestLine("NO CLASS", passCount[NUM_CLASSES]);
 }
 
 // Test a given stat-generation method.
@@ -357,6 +374,12 @@ void makeMasterTable () {
 			cout << getPassPercent(passCount[m][c]) << "\t";
 		}
 		cout << endl;		
+	}
+	
+	// Print no-class values
+	cout << "NO CLASS" << "\t";
+	for (int m = 0; m < NUM_METHODS; m++) {
+		cout << getPassPercent(passCount[m][NUM_CLASSES]) << "\t";
 	}
 	cout << endl;
 }
