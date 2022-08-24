@@ -95,7 +95,8 @@ const ClassRecord CLASS_REQS[] =
 // Constant for number of classes
 const int NUM_CLASSES = sizeof(CLASS_REQS) / sizeof(ClassRecord);
 
-// Class records with abilities sorted descending
+// Class records with minimum abilities sorted descending,
+// for use in methods that allow re-ordering.
 ClassRecord CLASS_REQS_SORTED[NUM_CLASSES];
 
 // Bubble sort descending edited from Gaddis C++
@@ -206,15 +207,15 @@ void makeStatsMethod2 (StatBlock &stats) {
 
 	// Roll 12 stats
 	const int NUM_ROLLS = 12;
-	int dozenStats[NUM_ROLLS];
+	int manyStats[NUM_ROLLS];
 	for (int i = 0; i < NUM_ROLLS; i++) {
-		dozenStats[i] = roll3d6();
+		manyStats[i] = roll3d6();
 	}
 	
 	// Take the best 6
-	sortArray(dozenStats, NUM_ROLLS);
+	sortArray(manyStats, NUM_ROLLS);
 	for (int i = 0; i < NUM_STATS; i++) {
-		stats[i] = dozenStats[i];	
+		stats[i] = manyStats[i];	
 	}
 }
 
@@ -225,11 +226,10 @@ void makeStatsMethod3 (StatBlock &stats) {
 	}
 }
 
-// Make one stat block per Method 4
+// Make stat block per Method 4
+// As Method 0, but we'll make an array of these.
 void makeStatsMethod4 (StatBlock &stats) {
-	for (int i = 0; i < NUM_STATS; i++) {
-		stats[i] = roll3d6();
-	}
+	makeStatsMethod0(stats);
 }
 
 // List of stack-block maker functions
