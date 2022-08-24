@@ -4,14 +4,16 @@
 	Author: Daniel R. Collins
 	Date: 22/08/22 23:40
 	Description: 
+	
 		Find odds to generate any class
 		from 1E AD&D defined stat-generation methods.
 
-		Assumes that ability limits for core classes 
-		DO carry to subclasses (unless otherwise noted).
-
 		Method Roman numeral identifiers written 
-		as Arabic to synch with C++, array indexing, etc.
+		in Arabic to synch with C++, array indexing, etc.
+
+		Assumes that 3-5 score restrictions permit
+		subclasses under a given prime class
+		(unless otherwise noted).
 */
 #include <ctime>
 #include <cassert>
@@ -37,7 +39,25 @@ struct ClassRecord {
 
 // Class records for minimum abilities
 // Order: Str, Int, Wis, Dex, Con, Cha.
-const ClassRecord CLASS_REQS[] = {
+const ClassRecord CLASS_REQS[] = 
+
+// OD&D and Supplements
+//{
+//	{"Fighter",     { 3,  3,  3,  3,  3,  3}},	
+//	{"Magic-User",  { 3,  3,  3,  3,  3,  3}},	
+//	{"Cleric",      { 3,  3,  3,  3,  3,  3}},	
+//	{"Thief",       { 3,  3,  3,  3,  3,  3}},	
+//	{"Paladin",     { 3,  3,  3,  3,  3, 17}},	
+//	{"Monk",        {12,  3, 15, 15,  3,  3}},	
+//	{"Assassin",    {12, 12,  3, 12,  3,  3}},	
+//	{"Druid",       { 3,  3, 12,  3,  3, 14}},	
+//	{"Ranger",      { 3, 12, 12,  3, 15,  3}},	
+//	{"Illusionist", { 3,  3,  3, 15,  3,  3}},	
+//	{"Bard",        { 9,  9,  3,  3,  3, 13}},	
+//};
+
+// AD&D 1E Players Handbook
+{
 	{"Cleric",      { 6,  6,  9,  3,  6,  6}},	
 	{"Druid",       { 6,  6, 12,  3,  6, 15}},	
 	{"Fighter",     { 9,  3,  6,  6,  7,  6}},	
@@ -50,6 +70,26 @@ const ClassRecord CLASS_REQS[] = {
 	{"Monk",        {15,  6, 15, 15, 11,  6}},	
 	{"Bard",        {15, 12, 15, 15, 10, 15}},	
 };
+
+// AD&D 1E Unearthed Arcana
+//{
+//	{"Cavalier",    {15, 10, 10, 15, 15,  6}},	
+//	{"Paladin",     {15, 10, 13, 15, 15, 17}},	
+//	{"Cleric",      { 6,  6,  9,  3,  6,  6}},	
+//	{"Druid",       { 6,  6, 12,  3,  6, 15}},	
+//	{"Fighter",     { 9,  3,  6,  6,  7,  6}},	
+//	{"Barbarian",   {15,  3,  6, 14, 15,  6}},	
+//	{"Ranger",      {13, 13, 14,  6, 14,  6}},	
+//	{"Magic-User",  { 3,  9,  6,  6,  6,  6}},	
+//	{"Illusionist", { 3, 15,  6, 16,  3,  6}},	
+//	{"Thief",       { 6,  6,  3,  9,  6,  6}},	
+//	{"Acrobat",     {15,  6,  3, 16,  6,  6}},	
+//	{"Assassin",    {12, 11,  3, 12,  6,  3}},	
+//	{"Monk",        {15,  6, 15, 15, 11,  6}},	
+//	{"Bard",        {15, 12, 15, 15, 10, 15}},	
+//};
+
+// Constant for number of classes
 const int NUM_CLASSES = sizeof(CLASS_REQS) / sizeof(ClassRecord);
 
 // Class records with abilities sorted descending
@@ -237,8 +277,8 @@ void testMethodX (int index, PassCount passCount) {
 }
 
 // Get pass rates for Method 4
-// This method needs special handling
-//  because it deals with multiple full stat blocks.
+// This generation method needs special handling
+//  because it deals with an array of full stat blocks.
 void testMethod4 (PassCount passCount) {
 	for (int t = 0; t < NUM_TRIALS; t++) {
 		const int NUM_CHARS = 12;
@@ -293,8 +333,3 @@ int main(int argc, char** argv) {
 	testAllMethods();
 	return 0;
 }
-
-/*
-	TODO:
-	- Add OD&D, Bards, UA style classes?
-*/
