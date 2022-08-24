@@ -24,7 +24,7 @@ const int DIE_SIDES = 6;
 const int NUM_STATS = 6;
 const int NAME_LEN = 16;
 const int NUM_METHODS = 5;
-const int NUM_TRIALS = 10000;
+const int NUM_TRIALS = 1000000;
 
 // Typedef for a stat block
 typedef int StatBlock[NUM_STATS];
@@ -48,6 +48,7 @@ const ClassRecord CLASS_REQS[] = {
 	{"Thief",       { 6,  6,  3,  9,  6,  6}},	
 	{"Assassin",    {12, 11,  3, 12,  6,  3}},	
 	{"Monk",        {15,  6, 15, 15, 11,  6}},	
+	{"Bard",        {15, 12, 15, 15, 10, 15}},	
 };
 const int NUM_CLASSES = sizeof(CLASS_REQS) / sizeof(ClassRecord);
 
@@ -258,9 +259,10 @@ void testMethod4 (PassCount passCount) {
 
 // Print test results for a generation method
 void printTestResults(PassCount passCount) {
+	cout << fixed << showpoint << setprecision(2);
 	for (int i = 0; i < NUM_CLASSES; i++) {
 		double percent = (double) passCount[i] / NUM_TRIALS * 100;
-		cout << left << setw(16) << CLASS_REQS[i].name;
+		cout << left << setw(NAME_LEN) << CLASS_REQS[i].name;
 		cout << right << setw(6) << percent << " %" << endl;		
 	}
 }
@@ -294,6 +296,5 @@ int main(int argc, char** argv) {
 
 /*
 	TODO:
-	- Fix output decimal places
 	- Add OD&D, Bards, UA style classes?
 */
