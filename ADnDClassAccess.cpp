@@ -8,12 +8,15 @@
 		Find odds to generate any class
 		from 1E AD&D defined stat-generation methods.
 
-		Method Roman numeral identifiers written 
-		in Arabic to synch with C++, array indexing, etc.
+		Uncomment appropriate ClassRecord lists to
+		switch rulesets (OD&D, AD&D, UA). 
 
 		Assumes that 3-5 score restrictions permit
-		subclasses under a given prime class
+		subclasses under a specified prime class
 		(unless otherwise noted).
+		
+		Method Roman numeral identifiers written 
+		in Arabic to synch with C++, array indexing, etc.
 */
 #include <ctime>
 #include <cassert>
@@ -297,13 +300,26 @@ void testMethod4 (PassCount passCount) {
 	}
 }
 
+// Get pass counts for any generation method.
+void getMethodPassCounts (int index, PassCount passCount) {
+	switch (index) {
+		default: testMethodX(index, passCount); break;
+		case 4: testMethod4(passCount); break;
+	}
+}
+
+// Compute the passing percentage from a given pass count.
+double getPassPercent(int passCount) {
+	return (double) passCount / NUM_TRIALS * 100;	
+}
+
 // Print test results for a generation method
 void printTestResults(PassCount passCount) {
 	cout << fixed << showpoint << setprecision(2);
 	for (int i = 0; i < NUM_CLASSES; i++) {
-		double percent = (double) passCount[i] / NUM_TRIALS * 100;
 		cout << left << setw(NAME_LEN) << CLASS_REQS[i].name;
-		cout << right << setw(6) << percent << " %" << endl;		
+		cout << right << setw(6) 
+			<< getPassPercent(passCount[i]) << " %" << endl;
 	}
 }
 
@@ -311,10 +327,7 @@ void printTestResults(PassCount passCount) {
 void testMethod(int index) {
 	cout << "# Method " << index << " #" << endl;
 	PassCount passCount = {0};
-	switch (index) {
-		default: testMethodX(index, passCount); break;
-		case 4: testMethod4(passCount); break;
-	}
+	getMethodPassCounts(index, passCount);
 	printTestResults(passCount);
 	cout << endl;
 }
@@ -326,10 +339,33 @@ void testAllMethods() {
 	}
 }
 
+// Make master table of results, copyable to spreadsheet
+void makeMasterTable () {
+
+	// Generate pass counts
+	PassCount passCount[NUM_METHODS] = {0};
+	for (int m = 0; m < NUM_METHODS; m++) {
+		getMethodPassCounts(m, passCount[m]);
+	}
+
+	// Print the table
+	cout << "# Master Access Table #" << endl;
+	cout << fixed << setprecision(0);
+	for (int c = 0; c < NUM_CLASSES; c++) {
+		cout << CLASS_REQS[c].name << "\t";
+		for (int m = 0; m < NUM_METHODS; m++) {
+			cout << getPassPercent(passCount[m][c]) << "\t";
+		}
+		cout << endl;		
+	}
+	cout << endl;
+}
+
 // Main test driver
 int main(int argc, char** argv) {
 	srand(time(0));
 	initClassReqsSorted();
 	testAllMethods();
+	//makeMasterTable();
 	return 0;
 }
