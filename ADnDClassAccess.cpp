@@ -18,6 +18,7 @@
 		Method Roman numeral identifiers written 
 		in Arabic to synch with C++, array indexing, etc.
 */
+#include <cmath>
 #include <ctime>
 #include <cassert>
 #include <iomanip>
@@ -360,14 +361,14 @@ void testAllMethods() {
 void makeMasterTable () {
 
 	// Generate pass counts
+	cout << "# Master Access Table #" << endl;
 	PassCount passCount[NUM_METHODS] = {0};
 	for (int m = 0; m < NUM_METHODS; m++) {
 		getMethodPassCounts(m, passCount[m]);
 	}
 
 	// Print the table
-	cout << "# Master Access Table #" << endl;
-	cout << fixed << setprecision(0);
+	cout << fixed << noshowpoint << setprecision(0);
 	for (int c = 0; c < NUM_CLASSES; c++) {
 		cout << CLASS_REQS[c].name << "\t";
 		for (int m = 0; m < NUM_METHODS; m++) {
@@ -384,11 +385,140 @@ void makeMasterTable () {
 	cout << endl;
 }
 
+// Compute sum of an int array as double
+double getSum(int array[], int size) {
+	double sum = 0;
+	for (int i = 0; i < size; i++) {
+		sum += array[i];	
+	}
+	return sum;	
+}
+
+// Compute mean of an int array
+double getMean(int array[], int size) {
+	return (double) getSum(array, size) / size;	
+}
+
+// Compute median of an int array
+//   Array gets sorted in process
+int getMedian(int array[], int size) {
+	sortArray(array, size);
+	return array[size / 2];
+}
+
+// Compute mode of an int array
+//   Mode must be in range 0 to 20.
+int getMode(int array[], int size) {
+	const int NUM_BINS = 20;
+
+	// Count frequencies
+	int bins[NUM_BINS] = {0};	
+	for (int i = 0; i < size; i++) {
+		if (0 <= array[i] && array[i] < NUM_BINS) {
+			bins[array[i]]++;	
+		}
+	}
+	
+	// Find highest frequency
+	int highIdx = 0;
+	for (int i = 1; i < NUM_BINS; i++) {
+		if (bins[i] > bins[highIdx]) {
+			highIdx = i;	
+		}
+	}
+	return highIdx;
+}
+
+// Compute standard deviation for a sample
+double getStdev(int array[], int size) {
+	double sumOfSquares = 0;
+	for (int i = 0; i < size; i++) {
+		sumOfSquares += array[i] * array[i];
+	}
+	double sum = getSum(array, size);
+	double sumSquared = sum * sum;
+	double variance = ((double) sumOfSquares - sumSquared / size) 
+		/ (size - 1);
+	double stdev = sqrt(variance);
+	return stdev;	
+}
+
+// Typedef for a statistical sample
+const int SAMPLE_BLOCKS = 1000;
+const int SAMPLE_SIZE = SAMPLE_BLOCKS * NUM_STATS;
+typedef int StatSample[SAMPLE_SIZE];
+
+// Get statistical sample for general method
+void getSampleMethodX(int method, StatSample sample) {
+	assert(method != 4);
+	for (int t = 0; t < SAMPLE_BLOCKS; t++) {
+		StatBlock newStats;
+		STAT_MAKER[method](newStats);
+		for (int s = 0; s < NUM_STATS; s++) {
+			sample[t * NUM_STATS + s] = newStats[s];
+		}
+	}
+}
+
+// Get statistical sample for Method 4
+// As usual, Method 4 needs handling at a higher level
+void getSampleMethod4(StatSample sample) {
+	for (int t = 0; t < SAMPLE_BLOCKS; t++) {
+
+		// Make 12 characters
+		const int NUM_CHARS = 12;
+		StatBlock manyStats[NUM_CHARS];
+		for (int c = 0; c < NUM_CHARS; c++) {
+			makeStatsMethod4(manyStats[c]);
+		}
+
+		// Identify character with best stats
+		int bestStatsIdx = -1;
+		int bestStatsSum = 0;
+		for (int c = 0; c < NUM_CHARS; c++) {
+			int newSum = getSum(manyStats[c], NUM_STATS);
+			if (newSum > bestStatsSum) {
+				bestStatsIdx = c;
+				bestStatsSum = newSum;
+			}
+		}
+		
+		// Add best character to sample roster
+		for (int s = 0; s < NUM_STATS; s++) {
+			sample[t * NUM_STATS + s] = manyStats[bestStatsIdx][s];
+		}
+	}
+}
+
+// Show descriptive statistics for method's sample
+void showStats(int method, StatSample sample) {
+	cout << "# Method " << method << " #" << endl;	
+	cout << "Mean: " << getMean(sample, SAMPLE_SIZE) << endl;
+	cout << "Median: " << getMedian(sample, SAMPLE_SIZE) << endl;
+	cout << "Mode: " << getMode(sample, SAMPLE_SIZE) << endl;
+	cout << "Stdev: " << getStdev(sample, SAMPLE_SIZE) << endl;
+	cout << endl;	
+}
+
+// Show stats for all methods
+void showAllStats() {
+	cout << fixed << showpoint << setw(6);
+	for (int i = 0; i < NUM_METHODS; i++) {
+		StatSample sample = {0};
+		switch(i) {
+			default: getSampleMethodX(i, sample); break;
+			case 4: getSampleMethod4(sample);	
+		}
+		showStats(i, sample);
+	}
+}
+
 // Main test driver
 int main(int argc, char** argv) {
 	srand(time(0));
 	initClassReqsSorted();
+	showAllStats();
 	testAllMethods();
-	//makeMasterTable();
+	makeMasterTable();
 	return 0;
 }
