@@ -145,7 +145,6 @@ void printAllClassReqs() {
 	printClassReqs(CLASS_REQS);
 	cout << "# Sorted Class Requisites #" << endl;
 	printClassReqs(CLASS_REQS_SORTED);
-	cout << endl;
 }
 
 // Roll 1d6
@@ -491,7 +490,7 @@ void getSampleMethod4(StatSample sample) {
 }
 
 // Show descriptive statistics for method's sample
-void showStats(int method, StatSample sample) {
+void showMethodStats(int method, StatSample sample) {
 	cout << "# Method " << method << " #" << endl;	
 	cout << "Mean: " << getMean(sample, SAMPLE_SIZE) << endl;
 	cout << "Median: " << getMedian(sample, SAMPLE_SIZE) << endl;
@@ -501,7 +500,7 @@ void showStats(int method, StatSample sample) {
 }
 
 // Show stats for all methods
-void showAllStats() {
+void showAllMethodStats() {
 	cout << fixed << showpoint << setw(6);
 	for (int i = 0; i < NUM_METHODS; i++) {
 		StatSample sample = {0};
@@ -509,7 +508,7 @@ void showAllStats() {
 			default: getSampleMethodX(i, sample); break;
 			case 4: getSampleMethod4(sample);	
 		}
-		showStats(i, sample);
+		showMethodStats(i, sample);
 	}
 }
 
@@ -517,7 +516,8 @@ void showAllStats() {
 int main(int argc, char** argv) {
 	srand(time(0));
 	initClassReqsSorted();
-	showAllStats();
+	showAllMethodStats();
+	printAllClassReqs();
 	testAllMethods();
 	makeMasterTable();
 	return 0;
